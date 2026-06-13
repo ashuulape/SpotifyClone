@@ -49,9 +49,7 @@ const registerUser=async (req,res)=>{
 
     } catch (error) {
 
-        res(404).json({
-            message:error.message
-        })
+        res.status(404).json({ message: error.message })
         
     }
 }
