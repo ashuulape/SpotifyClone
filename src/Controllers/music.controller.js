@@ -1,23 +1,12 @@
 const MusicModel=require("../models/music.model")
 const JWT=require("jsonwebtoken")
-const {uploadfile}=require("../services/storage.service")
 
+const albumModel=require("../models/album.model")
+const {uploadfile}=require("../services/storage.service")
 
 const CreateMusic=async(req,res)=>{
 
-    const token =req.cookies.token
-
-    if (!token) return res.status(401).json({ message: "unauthenticated" })
-
-  try {
-     const decoded= await JWT.verify(token ,process.env.JWT_TOKEN)
-
-    if (decoded.role !== "artist") return res.status(403).json({ message: "forbidden" })
-
-      
- 
-
-  const {title}=req.body
+ const {title}=req.body
 
   const  file=req.file
 
@@ -26,7 +15,7 @@ const CreateMusic=async(req,res)=>{
   const music = await MusicModel.create({
     url:filedata.url,
     title,
-    artist:decoded.id
+    artist:req.user.id
   })
 
   res.status(201).json({
@@ -34,12 +23,53 @@ const CreateMusic=async(req,res)=>{
     music
   })
 
- } catch (err) {
-  console.log(err.message)
-    return res.status(403).json({message:"forbidden"})
-    
-  }
+
 
 }
 
-module.exports={CreateMusic}
+const CreateAlbum=async(req,res)=>{
+
+  const{title,musics}=req.body
+
+  const album=await albumModel.create({
+
+    title,
+    artist:req.user.id,
+    musics:musics
+    
+  })
+
+  res.status(201).json({
+    message:"album created succesfully",
+    album:{
+      id:album._id,
+      title:album.title,
+      artist:album.artist,
+      musics:album.musics,
+    }
+  })
+ 
+ 
+}
+
+
+const getmusic =async(req,res)=>{
+ 
+  const music= await MusicModel.find().populate("artist","username")
+
+  res.status(200).json({
+    message:'music fetch sucessfully',
+    music
+  })
+
+}
+
+const getAlbum=async(req,res)=>{
+  const album=await albumModel.find().populate("artist","username")
+
+  res.status(200).json({
+    message:'album fetch sucessfully',
+    album
+  })
+}
+module.exports={CreateMusic,CreateAlbum,getmusic,getAlbum}
